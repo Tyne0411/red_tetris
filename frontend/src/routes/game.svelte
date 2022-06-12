@@ -31,6 +31,10 @@
 		let board;
 		let shadow = makeShadow(currentShape);
 
+	let nextShape = {
+		shape: []
+	};
+
 	function initGame() {
 		socket.emit('initgame', roomname)
 	}
@@ -180,6 +184,9 @@
 	.self {
 		max-width: 30vw;
 	}
+	.next-piece {
+		width: 4rem;
+	}
 </style>
 
 <svelte:window
@@ -208,6 +215,8 @@
 				board = data.board;
 				score = data.scores.score;
 				lines = data.scores.lines;
+				nextShape = data.nextShape;
+				console.log(nextShape.shape);
 			}
 		}
 		else {
@@ -276,6 +285,16 @@
 			{level}<br>
 			LINES<br>
 			{lines}<br>
+			<br />
+			<div class="board next-piece">
+				{#each nextShape.shape as row}
+					<div class="row">
+						{#each row as cell}
+							<div class="cell cell-{cell ? nextShape.colorid : 0}"></div>
+						{/each}
+					</div>
+				{/each}
+			</div>
 		</div>
 
 		<button
