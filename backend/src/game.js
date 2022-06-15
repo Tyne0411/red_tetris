@@ -77,7 +77,7 @@ export function launchGame(io, socket) {
 	}
 
 	launch() {
-		if (room.started)
+		if (this.started)
 			return ;
 
 		this.started = true;
