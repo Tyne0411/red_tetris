@@ -25,7 +25,7 @@ if (browser)
 	});
 	user.set(localStorage.getItem('user') ?? '')
 
-	socket = io(`http://${location.hostname}:4000`)
+	socket = io(`${location.origin}:4000`)
 	socket.on("connect", () => connected.set(true))
 	socket.on("connect_error", () => connected.set(false));
 	socket.on("disconnect", () => connected.set(false));
