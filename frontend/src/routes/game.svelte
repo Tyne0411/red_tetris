@@ -17,7 +17,20 @@
 		return (board)
 	}
 
-	let board = getBoard(shapes)
+	function makeShadow(currentShape) {
+		let copy = currentShape.clone()
+		copy.colorid = 8
+		while (copy.tick(layer)) ;
+		return copy;
+	}
+	function draw(currentShape, layer) {
+		let board;
+		let shadow = makeShadow(currentShape);
+
+		board = shadow.drawOn(layer)
+		board = currentShape.drawOn(board)
+		return board
+	}
 
 	onMount(() => {
 		let interval = setInterval(() => {
@@ -43,7 +56,11 @@
 				shapes.push(currentShape)
 				currentShape = undefined
 			}
+<<<<<<< HEAD
 		}, 1000)
+=======
+		}, 500)
+>>>>>>> edfaa74 (test)
 
 		return () => {
 			clearInterval(interval)
