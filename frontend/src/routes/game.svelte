@@ -60,6 +60,8 @@
 		}, 500)
 
 		return () => {
+			console.log('leaveRoom')
+			socket.emit('leaveRoom')
 			clearInterval(interval)
 		}
 	})
@@ -80,6 +82,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
+		position: relative;
+		overflow: hidden;
+		height: fit-content;
 	}
 	.row {
 		display: flex;
@@ -147,10 +152,6 @@
 			opacity: 1;
 		}
 	}
-	.gameover .red-button {
-		opacity: 0;
-		animation: .5s .7s fade forwards
-	}
 	aside {
 		display: flex;
 		flex-direction: column;
@@ -184,6 +185,16 @@
 				{/each}
 			</div>
 		{/each}
+
+		{#if gameover}
+			<div class="gameover">
+				<h2>GAMEOVER</h2>
+				<div class="gameover-score">
+					SCORE<br>
+					{score}
+				</div>
+			</div>
+		{/if}
 	</div>
 	<aside>
 		<h2>{$user}</h2>
@@ -204,20 +215,3 @@
 		>LEAVE</button>
 	</aside>
 </main>
-
-{#if gameover}
-	<div class="gameover">
-		<h2>GAMEOVER</h2>
-		<div class="gameover-score">
-			SCORE<br>
-			0
-		</div>
-
-		<button
-			class="red-button"
-			on:click={() => goto('/rooms')}
-		>
-			REPLAY
-		</button>
-	</div>
-{/if}
