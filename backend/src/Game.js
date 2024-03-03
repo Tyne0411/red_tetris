@@ -130,66 +130,6 @@ export function launchGame(io, socket) {
 			}
 			currentShape = newShape
 		}
-		
-		let moved = currentShape.tick(layer)
-		board = draw(currentShape, layer);
-
-		if (!moved)
-		{
-			layer = currentShape.drawOn(layer)
-			currentShape = undefined
-
-			let filterLayer = layer
-				.filter(row => row.some(cell => cell == 0));
-			score += [0, 100, 300, 500, 800][layer.length - filterLayer.length]
-			while (filterLayer.length != layer.length)
-			{
-				filterLayer.unshift(new Array(10).fill(0))
-				++lines;
-			}
-			layer = filterLayer
-
-			sendLayerData(io, socket, layer, { score, lines })
-		}
-		sendGameData(socket, board, { score, lines }, nextShape);
-	}, {
-		blackhole: 75,
-		sun: 150,
-		earth: 400,
-		moon: 800
-	}[socket.room.gameMode])
-
-	const leaveRoom = () => {
-		// console.log(socket.room.name, 'leaveRoom -> ', socket.id);
-		socket.removeAllListeners(`event:${socket.room.name}`)
-		clearInterval(interval)
-	})
-	socket.on('disconnect', () => {
-		console.log(`${room.name}`, 'disconnect -> ', socket.id);
-		clearInterval(interval)
-	})
-	
-	// Apply event from user
-	socket.on(`event:${room.name}`, (key) => {
-		console.log(`${room.name}`, key);
-		if (currentShape === undefined) return ;
-		if (key == 'ArrowLeft')
-			currentShape.move(layer, -1, 0)
-		else if (key == 'ArrowRight')
-			currentShape.move(layer, 1, 0)
-		else if (key == 'ArrowUp')
-			currentShape.rotateLeft(layer)
-		else if (key == 'ArrowDown')
-		{
-			currentShape.move(layer, 0, 1)
-			score += 1
-		}
-		else if (key == ' ')
-			while (currentShape.move(layer, 0, 1))
-				score += 2;
-		else
-			return ;
-		board = draw(currentShape, layer);
-		sendGameData(socket, board, { score, lines }, nextShape)
-	})
+		loop();
+	}
 }
