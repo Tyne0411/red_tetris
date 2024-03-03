@@ -31,30 +31,14 @@
 		let board;
 		let shadow = makeShadow(currentShape);
 
-		board = shadow.drawOn(layer)
-		board = currentShape.drawOn(board)
-		return board
+	function initGame() {
+		socket.emit('initgame', roomname)
 	}
 
 	onMount(() => {
 		if (!(roomname = location.hash.slice(1).toLowerCase()))
 			goto('/rooms')
 
-		socket.on(`gamedata:${roomname}`, (_users) => {
-			users = _users
-			console.log("list", users);
-		})
-		socket.on(`notauthorized:${roomname}`, () => {
-			console.log('notauthorized');
-			goto('/rooms')
-		})
-		console.log(`emit game: initgame`)
-
-		const initGame = () => {
-			console.log('initgame', roomname)
-			socket.emit('initgame', roomname)
-		}
-		socket.on('connect', initGame)
 		initGame()
 		socket.on(`gameInfo:${roomname}`, (data) => {
 			if (data === 'gameover') {
@@ -80,6 +64,7 @@
 
 <style>
 	main {
+		overflow: hidden;
 		width: 100%;
 		height: 100%;
 		background: #0c0c11;
@@ -131,6 +116,7 @@
 		--shadow-color: #0d0d171e;
 		box-shadow: var(--shadow); 
 	}
+	.cell-0 { --color: #3f3f3f; }
 
 	@keyframes popin {
 		0% { transform: scale(0) }
@@ -169,16 +155,94 @@
 		flex-direction: column;
 		gap: 30px;
 	}
+
+	.small-board {
+		display: flex;
+		aspect-ratio: 1/2;
+		background: var(--back-1);
+	}
+	.small-board > div {
+		background: var(--grey-back-1);
+		flex: 1;
+	}
+	.small-gameover {
+		filter: brightness(.3) saturate(.6);
+	}
+
+	.others {
+		max-width: 15vw;
+		overflow-y: auto;
+		padding-right: 10px;
+	}
+	.others > div {
+		width: 100%;
+	}
+	.self {
+		max-width: 30vw;
+	}
 </style>
 
 <svelte:window
-	on:keydown={e => {
-		console.log('emit key')
-		socket.emit(`event:${roomname}`, e.key);
+	on:keydown={e => socket.emit(`event:${roomname}`, e.key)}
+/>
+
+<Listener
+	on="notauthorized:{roomname}"
+	handler={() => {
+		// console.log('notauthorized');
+		goto('/rooms')
+	}}
+/>
+<Listener
+	on="connect"
+	handler={initGame}
+/>
+<Listener
+	on="gameInfo:{roomname}"
+	handler={(data) => {
+		if (data.clientId === socket.id)
+		{
+			if (data.gameover)
+				gameover = true
+			else {
+				board = data.board;
+				score = data.scores.score;
+				lines = data.scores.lines;
+			}
+		}
+		else {
+			if (data.gameover)
+				usersBoard.set(data.clientId, {
+					...usersBoard.get(data.clientId),
+					gameover: true,
+				})
+			else
+			{
+				usersBoard.set(data.clientId, {
+					username: data.username,
+					heights: data.heights,
+					scores: data.scores
+				});
+			}
+			usersBoard = usersBoard
+		}
 	}}
 />
 
 <main>
+	<aside class="others">
+		{#each [...usersBoard.entries()] as [_, { username, heights, scores, gameover }]}
+			<div>
+				{username}<br>
+				{scores.score}
+				<div class="small-board {gameover ? 'small-gameover' : ''}">
+					{#each heights as height}
+						<div style="height: {height / 20 * 100}%;"></div>
+					{/each}
+				</div>
+			</div>	
+		{/each}
+	</aside>
 	<div class="container">
 		{#if gameover}
 			<div class="gameover">

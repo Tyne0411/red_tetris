@@ -14,20 +14,70 @@ const io = new Server({
 	}
 });
 
+<<<<<<< HEAD
+=======
+function makeFuturePieces() {
+	let Iterations = 32;
+	let sequence = [];
+	while (Iterations) {
+		let tetriminos = [0, 1, 2, 3, 4, 5, 6]
+		let currentIndex = tetriminos.length, randomIndex;
+
+		// While there remain elements to shuffle.
+		while (currentIndex != 0) {
+
+			// Pick a remaining element.
+			randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex--;
+
+			// Swap two element with the random index
+			[tetriminos[currentIndex], tetriminos[randomIndex]] = [tetriminos[randomIndex], tetriminos[currentIndex]];
+		}
+		// console.log('randomShuffle ->', tetriminos);
+		sequence.push(...tetriminos);
+		Iterations--;
+	}
+	return sequence
+}
+
+>>>>>>> 4414905 (reduce info others)
 io.on("connection", (socket) => {
 
-	console.log("connection socket", socket.id)
+	// console.log("connection socket", socket.id)
 
+<<<<<<< HEAD
 	socket.on('joinRoom', (room) => {
 
 		// Make sure user as an username
 		if (room.user === null || room.user === undefined || room.user === '') {
 			console.log('here');
+=======
+	// Init game for user
+	socket.removeAllListeners('initgame')
+	socket.on('initgame', (roomname) => {
+		// console.log('test authorized', socket.room, roomname)
+		if (roomname !== socket?.room?.name)
+		{
+			socket.emit(`notauthorized:${roomname}`)
+			// console.log('notauthorized')
+			return ;
+		}
+		// Launch game loop
+		// console.log(socket.room, 'launchGame');
+		launchGame(io, socket);
+	})
+
+	socket.on('joinRoom', (room) => {
+
+		// Make sure user as an username
+		if (room.user === undefined || room.user === '') {
+			// console.log('here');
+>>>>>>> 4414905 (reduce info others)
 			return ;
 		}
 		socket.username = room.user;
 
-		console.log('joinRoom', room)
+		// console.log('joinRoom', room)
 
 		if (!rooms.has(room.name))
 		{
@@ -78,7 +128,7 @@ io.on("connection", (socket) => {
 
 		// Disconnects
 		socket.on('leaveRoom', () => {
-			console.log('leaveRoom1', room);
+			// console.log('leaveRoom1', room);
 			socket.leave(room.name)
 			sendUsersList()
 		})

@@ -61,6 +61,29 @@
 	}
 </style>
 
+<Listener
+	on="join:{roomname}"
+	handler={(_users) => {
+		users = _users
+	}}
+/>
+<Listener
+	on="start:{roomname}"
+	handler={() => {
+		goto(`/game#${roomname}`)
+	}}
+/>
+<Listener
+	on="connect"
+	handler={joinRoom}
+/>
+<Listener
+	on="gameMode:{roomname}"
+	handler={(_gameMode) => {
+		gameMode = _gameMode
+	}}
+/>
+
 <main class="main">
 	<div id="logo" on:click={() => {
 		socket.emit('leaveRoom')

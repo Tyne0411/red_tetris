@@ -23,12 +23,44 @@ function draw(currentShape, layer) {
 	return board
 }
 
+<<<<<<< HEAD
 function	sendGameData(io, room, board, clientId) {
 	io.in(room.name).emit(`gameInfo:${room.name}`, {board, clientId});
 }
 
 export function launchGame(io, room, objRoom, socket) {
 	console.log('lauchGame objRoom =', objRoom);
+=======
+function	sendGameData(socket, board, scores) {
+	socket.emit(`gameInfo:${socket.room.name}`, {
+		clientId: socket.id, // his socket id to identify it in frontend
+		board, // contains the board of one player
+		scores // contains score and lines
+	});
+}
+
+function	sendLayerData(io, socket, layer, scores) {
+	let heights = new Array(10).fill().map((_, x) => {
+		for (let y in layer)
+			if (layer[y][x] && layer[y][x] != 8)
+				return (+y)
+		return (20)
+	})
+
+	socket.in(socket.room.name).emit(
+		`gameInfo:${socket.room.name}`, {
+			clientId: socket.id,
+			heights,
+			username: socket.username,
+			scores
+		}
+	)
+}
+
+export function launchGame(io, socket) {
+	// console.log('lauchGame ', socket.username, socket.room);
+
+>>>>>>> 4414905 (reduce info others)
 	let gameover = false
 	let currentShape;
 	let i = 0;
@@ -71,12 +103,28 @@ export function launchGame(io, room, objRoom, socket) {
 				++lines;
 			}
 			layer = filterLayer
+
+			sendLayerData(io, socket, layer, { score, lines })
 		}
+<<<<<<< HEAD
 		sendGameData(io, room, board, socket.id)
 	}, 500)
 
 	socket.on('leaveRoom', () => {
 		console.log(`${room.name}`, 'leaveRoom -> ', socket.id);
+=======
+		sendGameData(socket, board, { score, lines }, nextShape);
+	}, {
+		blackhole: 75,
+		sun: 150,
+		earth: 400,
+		moon: 800
+	}[socket.room.gameMode])
+
+	const leaveRoom = () => {
+		// console.log(socket.room.name, 'leaveRoom -> ', socket.id);
+		socket.removeAllListeners(`event:${socket.room.name}`)
+>>>>>>> 4414905 (reduce info others)
 		clearInterval(interval)
 	})
 	socket.on('disconnect', () => {
@@ -105,6 +153,10 @@ export function launchGame(io, room, objRoom, socket) {
 		else
 			return ;
 		board = draw(currentShape, layer);
+<<<<<<< HEAD
 		sendGameData(io, room, board, socket.id)
+=======
+		sendGameData(socket, board, { score, lines }, nextShape)
+>>>>>>> 4414905 (reduce info others)
 	})
 }
