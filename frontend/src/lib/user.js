@@ -10,6 +10,7 @@ export let socket;
 if (browser)
 {
 	user.subscribe(username => {
+<<<<<<< HEAD
 		console.log(username);
 		if (username === undefined || username === '') {
 			console.log(location)
@@ -17,6 +18,9 @@ if (browser)
 				goto('/');
 			return ;
 		}
+=======
+		// console.log(username);
+>>>>>>> 4414905 (reduce info others)
 		localStorage.setItem('user', username)
 	});
 	user.set(localStorage.getItem('user') ?? '')
