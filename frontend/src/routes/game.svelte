@@ -1,6 +1,7 @@
 <script>
 	import { user } from "$lib/user";
 	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
 	import { TETRIMINOS } from "$lib/Shape.js";
 
 	let gameover = false
@@ -56,11 +57,7 @@
 				shapes.push(currentShape)
 				currentShape = undefined
 			}
-<<<<<<< HEAD
-		}, 1000)
-=======
 		}, 500)
->>>>>>> edfaa74 (test)
 
 		return () => {
 			clearInterval(interval)
@@ -129,13 +126,13 @@
 		height: 100%;
 		display: grid;
 		place-content: center;
+		gap: 20px;
 		z-index: 999;
-		font-size: 50px;
 		animation: .5s popin forwards;
 	}
 	@keyframes grow {
 		to {
-			height: 3em;
+			height: 2.5em;
 			opacity: 1;
 		}
 	}
@@ -145,9 +142,20 @@
 		opacity: 0;
 		animation: .3s .5s grow ease-out forwards;
 	}
-	/* .red-button {
-		animation .6s .8s fade 
-	} */
+	@keyframes fade {
+		to {
+			opacity: 1;
+		}
+	}
+	.gameover .red-button {
+		opacity: 0;
+		animation: .5s .7s fade forwards
+	}
+	aside {
+		display: flex;
+		flex-direction: column;
+		gap: 30px;
+	}
 </style>
 
 <svelte:window
@@ -178,26 +186,37 @@
 		{/each}
 	</div>
 	<aside>
-		{$user}<br>
-		HIGH SCORE<br>
-		0<br>
-		SCORE<br>
-		0<br>
-		LEVEL<br>
-		0<br>
-		LINES<br>
-		0
+		<h2>{$user}</h2>
+		<div>
+			HIGH SCORE<br>
+			0<br>
+			SCORE<br>
+			{score}<br>
+			LEVEL<br>
+			{level}<br>
+			LINES<br>
+			{lines}<br>
+		</div>
+
+		<button
+			class="red-button"
+			on:click={() => goto(`/rooms`)}
+		>LEAVE</button>
 	</aside>
 </main>
 
 {#if gameover}
 	<div class="gameover">
-		GAMEOVER<br>
+		<h2>GAMEOVER</h2>
 		<div class="gameover-score">
 			SCORE<br>
 			0
 		</div>
-		<button class="red-button">
+
+		<button
+			class="red-button"
+			on:click={() => goto('/rooms')}
+		>
 			REPLAY
 		</button>
 	</div>
