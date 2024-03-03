@@ -1,11 +1,8 @@
 // import { connect } from './mongodb.js'
 import { Server } from "socket.io";
-import { launchGame } from './game.js';
-
-// import { gameRoom } from "./gameRoom.js"
-
-// let db = await connect()
-let rooms = new Map();
+import { Game } from './Game.js';
+import { connectMongo, scoresDB } from './mongodb.js';
+import { Client } from './Client.js'
 
 export const io = new Server({
 	cors: {
@@ -38,129 +35,112 @@ function makeFuturePieces() {
 	return sequence
 }
 
-io.on("connection", (socket) => {
-
-	// console.log("connection socket", socket.id)
-
-	// Init game for user
-	socket.removeAllListeners('initgame')
-	socket.on('initgame', (roomname) => {
-		// console.log('test authorized', socket.room, roomname)
-		if (roomname !== socket?.room?.name)
-		{
-			socket.emit(`notauthorized:${roomname}`)
-			// console.log('notauthorized')
-			return ;
-		}
-		// Launch game loop
-		// console.log(socket.room, 'launchGame');
-		launchGame(io, socket);
-	})
-
-	socket.on('joinRoom', (room) => {
-
-		// Make sure user as an username
-		if (room.user === undefined || room.user === '') {
-			// console.log('here');
-			return ;
-		}
-		socket.username = room.user;
-
-		// console.log('joinRoom', room)
-
-		if (!rooms.has(room.name))
-		{
-			rooms.set(room.name, {
-				// name: room.name,
-				gameMode: 'earth',
-				seed: Math.random()
-			})
-		}
-		socket.join(room.name);
-		console.log(rooms.get(room.name))
-		const sendUsersList = () => {
-			let users = [...(io.sockets.adapter.rooms?.get?.(room.name) ?? [])]
-					.map(id => io.sockets.sockets.get(id).username)
-
-			io.in(room.name).emit(`join:${room.name}`, users);
-		}
-
-		sendUsersList()
-
-		// Start the game on room
-		socket.on(`start:${room.name}`, () => {
-			io.in(room.name).emit(`start:${room.name}`);
-		})
-
-		// Change game mode
-		socket.on(`gameMode:${room.name}`, (gameMode) => {
-			let newGameMode = gameMode ?? rooms.get(room.name).gameMode
-			console.log('newGameMode', newGameMode)
-			rooms.get(room.name).gameMode = newGameMode
-			io.in(room.name).emit(`gameMode:${room.name}`, newGameMode);
-		})
-
-		// Init game for user
-		socket.removeAllListeners('initgame')
+function start() {
+	io.on("connection", (socket) => {
+	
+		socket.on('getRoomList', () => sendRoomList(socket));
+	
+		socket.on('getScoresList', (username) => sendScores(socket, username));
+	
 		socket.on('initgame', (roomname) => {
-			console.log('test authorized', room.name, roomname)
-			if (roomname !== room.name)
+	
+			let currRoom = rooms.get(roomname);
+	
+			if (currRoom == undefined || !currRoom.players.has(socket.id))
+				socket.emit(`notauthorized:${roomname}`)
+	
+		});
+	
+		socket.on('joinRoom', ({
+			user: username = '',
+			name: roomname = '',
+			bot = false
+		}) => {
+	
+			if (!/^[a-z0-9_-]{1,16}$/i.test(username) || username === undefined)
 			{
-				room.stopInterval();
-				rooms.delete(roomname);
+				socket.emit('userNameError', `username required`);
+				return ;
 			}
+			if (!/^[a-z0-9_-]{1,16}$/i.test(roomname))
+			{
+				socket.emit('roomNameError', `invalid roomname`);
+				return ;
+			}
+	
+			if (!rooms.has(roomname))
+				rooms.set(roomname, new Game(io, roomname, 'earth'));
+	
+			let room = rooms.get(roomname);
+	
+			if (room.started === true)
+			{
+				socket.emit('roomNameError', `${roomname} has already started`);
+				return ;
+			}
+		
+			let client = new Client(socket);
+	
+			const removePlayer = () => {
+				room.removePlayer(client);
+				if (room.players.size == 0)
+				{
+					room.stopInterval();
+					rooms.delete(roomname);
+				}
+				sendRoomList(io);
+			}
+	
+			room.addPlayer(username, bot, client);
+	
 			sendRoomList(io);
-		}
-
-		room.addPlayer(username, client);
-
-		sendRoomList(io);
-
-		room.sendUsersList();
-
-		client.on(`start:${roomname}`, () => {
-
-			if (room.owner?.client?.id !== client.id)
-				return ;
-
-			io.in(roomname).emit(`start:${roomname}`);
-
-			room.launch();
-		});
-
-		client.on(`restart:${roomname}`, () => {
-			if (room.owner?.client?.id !== client.id)
-				return ;
-			io.in(roomname).emit(`restart:${roomname}`);
-
-			for (let [_, player] of room.players)
-				player.client.clearListeners();
-			room.players = new Map();
-			room.stopInterval();
-
-			rooms.set(roomname, new Game(io, roomname, room.gameMode));
-			room = rooms.get(roomname);
-
-			room.addPlayer(username, client, () => {});
-		});
-
-		client.on(`gameMode:${roomname}`, (gameMode) => {
-			let newGameMode = gameMode ?? room.gameMode;
-
-			if (room.owner?.client?.id === client.id)
-				room.gameMode = newGameMode;
-			io.in(roomname).emit(`gameMode:${roomname}`, room.gameMode);
+	
+			room.sendUsersList();
+	
+			client.on(`start:${roomname}`, () => {
+	
+				if (room.owner?.client?.id !== client.id)
+					return ;
+	
+				io.in(roomname).emit(`start:${roomname}`);
+	
+				room.launch();
+				sendRoomList(io);
+			});
+	
+			client.on(`restart:${roomname}`, () => {
+				if (room.owner?.client?.id !== client.id)
+					return ;
+				io.in(roomname).emit(`restart:${roomname}`);
+	
+				for (let [_, player] of room.players)
+					player.client.clearListeners();
+				room.players = new Map();
+				room.stopInterval();
+	
+				rooms.set(roomname, new Game(io, roomname, room.gameMode));
+				room = rooms.get(roomname);
+	
+				room.addPlayer(username, bot, client);
+			});
+	
+			client.on(`gameMode:${roomname}`, (gameMode) => {
+				let newGameMode = gameMode ?? room.gameMode;
+	
+				if (room.owner?.client?.id === client.id)
+					room.gameMode = newGameMode;
+				io.in(roomname).emit(`gameMode:${roomname}`, room.gameMode);
+			})
+	
+			// Disconnects
+			client.on('leaveRoom', removePlayer);
+			client.on('disconnect', removePlayer);
+	
 		})
+	
+	});
+}
 
-		// Disconnects
-		socket.on('leaveRoom', () => {
-			// console.log('leaveRoom1', room);
-			socket.leave(room.name)
-			sendUsersList()
-		})
-		socket.on('disconnect', sendUsersList)
-	})
-
-});
+connectMongo().then(start)
 
 io.listen(4000);
