@@ -39,6 +39,11 @@
 		socket.emit('initgame', roomname)
 	}
 
+	function endGame(playerList) {
+		endPlayerList = playerList;
+		isEndGame = true;
+	}
+
 	onMount(() => {
 		if (!(roomname = location.hash.slice(1).toLowerCase()))
 			goto('/rooms')
@@ -207,6 +212,7 @@
 <Listener
 	on="gameInfo:{roomname}"
 	handler={(data) => {
+		
 		if (data.clientId === socket.id)
 		{
 			if (data.gameover)
@@ -216,7 +222,6 @@
 				score = data.scores.score;
 				lines = data.scores.lines;
 				nextShape = data.nextShape;
-				console.log(nextShape.shape);
 			}
 		}
 		else {

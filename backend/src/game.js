@@ -18,10 +18,7 @@ function draw(currentShape, layer) {
 	let board;
 	let shadow = makeShadow(currentShape, layer);
 
-	board = shadow.drawOn(layer)
-	board = currentShape.drawOn(board)
-	return board
-}
+	addPlayer(username, client) {
 
 function	sendGameData(socket, board, scores) {
 	socket.emit(`gameInfo:${socket.room.name}`, {

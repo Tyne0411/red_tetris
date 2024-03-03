@@ -4,8 +4,9 @@
 	import { user, socket } from "$lib/user.js";
 	import { browser } from "$app/env"
 
-	let roomname = ''
-	let users = []
+	let roomname = '';
+	let users = [];
+	let owner = false;
 
 	let gameMode = undefined
 
