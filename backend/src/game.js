@@ -39,12 +39,48 @@ function	sendLayerData(io, socket, layer, scores) {
 		return (20)
 	})
 
-	socket.in(socket.room.name).emit(
-		`gameInfo:${socket.room.name}`, {
-			clientId: socket.id,
-			heights,
-			username: socket.username,
-			scores
+		if (this.players.size == 0 || this.owner?.client.id === client.id)
+			this.setOwner(newPlayer);
+
+		this.players.get(client.id)?.clearListeners?.();
+		this.players.set(client.id, newPlayer)
+	}
+
+	getPlayerList() {
+		return [...this.players.values()]
+	}
+
+	removePlayer(client) {
+		client.clearListeners();
+
+		const currPlayer = this.players.get(client.id);
+		
+		this.players.delete(client.id);
+
+		if (this?.owner?.client?.id === client.id)
+			this.setOwner([...this.players.values()][0]);
+
+		if (this.started && currPlayer?.score > 0)
+			scoresDB.insertOne({
+				username: currPlayer.username,
+				score: currPlayer.score
+			})
+
+		this.sendUsersList();
+
+	}
+
+	stopInterval() {
+		clearInterval(this.interval);
+	}
+
+	makeIndestructibleLines(nbLines, senderPlayer) {
+		if (nbLines > 0) {
+			for (let [_, player] of this.players) {
+				if (senderPlayer.client.id !== player.client.id) {
+					player.addIndestructibleLine(nbLines);
+				}
+			}
 		}
 	)
 }
@@ -58,9 +94,10 @@ export function launchGame(io, socket) {
 	let layer = emptyBoard();
 	let board = emptyBoard();
 
-	let score = 0;
-	let level = 0;
-	let lines = 0;
+		if (nbGameover >= this.players.size - (isSolo ? 0 : 1)) {
+			this.stopInterval();
+			for (let [_, player] of this.players)
+				player.client.removeAllListeners(`event:${this.name}`);
 
 			let list = [];
 			for (let { username, score } of this.gameOverList)
@@ -156,10 +193,6 @@ export function launchGame(io, socket) {
 		else
 			return ;
 		board = draw(currentShape, layer);
-<<<<<<< HEAD
-		sendGameData(io, room, board, socket.id)
-=======
 		sendGameData(socket, board, { score, lines }, nextShape)
->>>>>>> 4414905 (reduce info others)
 	})
 }

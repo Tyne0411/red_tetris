@@ -7,15 +7,13 @@ import { launchGame } from './game.js';
 // let db = await connect()
 let rooms = new Map();
 
-const io = new Server({
+export const io = new Server({
 	cors: {
 		origin: "*",
 		methods: ["GET", "POST"]
 	}
 });
 
-<<<<<<< HEAD
-=======
 function makeFuturePieces() {
 	let Iterations = 32;
 	let sequence = [];
@@ -40,18 +38,10 @@ function makeFuturePieces() {
 	return sequence
 }
 
->>>>>>> 4414905 (reduce info others)
 io.on("connection", (socket) => {
 
 	// console.log("connection socket", socket.id)
 
-<<<<<<< HEAD
-	socket.on('joinRoom', (room) => {
-
-		// Make sure user as an username
-		if (room.user === null || room.user === undefined || room.user === '') {
-			console.log('here');
-=======
 	// Init game for user
 	socket.removeAllListeners('initgame')
 	socket.on('initgame', (roomname) => {
@@ -72,7 +62,6 @@ io.on("connection", (socket) => {
 		// Make sure user as an username
 		if (room.user === undefined || room.user === '') {
 			// console.log('here');
->>>>>>> 4414905 (reduce info others)
 			return ;
 		}
 		socket.username = room.user;
@@ -117,15 +106,9 @@ io.on("connection", (socket) => {
 			console.log('test authorized', room.name, roomname)
 			if (roomname !== room.name)
 			{
-				socket.emit(`notauthorized:${roomname}`)
-				console.log('notauthorized')
-				return ;
+				room.stopInterval();
+				rooms.delete(roomname);
 			}
-<<<<<<< HEAD
-			// Launch game loop
-			console.log(room.name, 'launchGame');
-			launchGame(io, room, rooms.get(room.name), socket);
-=======
 			sendRoomList(io);
 		}
 
@@ -153,7 +136,7 @@ io.on("connection", (socket) => {
 			for (let [_, player] of room.players)
 				player.client.clearListeners();
 			room.players = new Map();
-			room.removeInterval();
+			room.stopInterval();
 
 			rooms.set(roomname, new Game(io, roomname, room.gameMode));
 			room = rooms.get(roomname);
@@ -167,7 +150,6 @@ io.on("connection", (socket) => {
 			if (room.owner?.client?.id === client.id)
 				room.gameMode = newGameMode;
 			io.in(roomname).emit(`gameMode:${roomname}`, room.gameMode);
->>>>>>> b544993 (security)
 		})
 
 		// Disconnects
