@@ -55,11 +55,13 @@ function	sendGameData(socket, board, scores) {
 		if (this?.owner?.client?.id === client.id)
 			this.setOwner([...this.players.values()][0]);
 
-		if (this.started && currPlayer?.score > 0)
+		if (this.started && currPlayer?.score > 0 && !currPlayer?.isbot)
+		{
 			scoresDB.insertOne({
 				username: currPlayer.username,
 				score: currPlayer.score
 			})
+		}
 
 		this.sendUsersList();
 
@@ -121,10 +123,8 @@ export function launchGame(io, socket) {
 				.constructShape()
 			if (newShape.intersect(layer))
 			{
-				gameover = true;
-				io.in(room.name).emit(`gameInfo:${room.name}`, "gameover");
-				clearInterval(interval)
-				return ;
+				this.timeout = setTimeout(loop, 1000 / this.tick_per_secs);
+				// this.tick_per_secs += 0.002;
 			}
 			currentShape = newShape
 		}

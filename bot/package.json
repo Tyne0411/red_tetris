@@ -1,0 +1,12 @@
+{
+	"scripts": {
+		"learn": "node learn.js",
+		"duel": "node duel.js",
+		"edracoon-bot": "nodemon edracoon_bot.js"
+	},
+	"dependencies": {
+		"nodemon": "^2.0.16",
+		"socket.io-client": "^4.5.1"
+	},
+	"type": "module"
+}
