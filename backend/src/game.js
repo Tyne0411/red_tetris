@@ -23,14 +23,6 @@ function draw(currentShape, layer) {
 	return board
 }
 
-<<<<<<< HEAD
-function	sendGameData(io, room, board, clientId) {
-	io.in(room.name).emit(`gameInfo:${room.name}`, {board, clientId});
-}
-
-export function launchGame(io, room, objRoom, socket) {
-	console.log('lauchGame objRoom =', objRoom);
-=======
 function	sendGameData(socket, board, scores) {
 	socket.emit(`gameInfo:${socket.room.name}`, {
 		clientId: socket.id, // his socket id to identify it in frontend
@@ -60,7 +52,6 @@ function	sendLayerData(io, socket, layer, scores) {
 export function launchGame(io, socket) {
 	// console.log('lauchGame ', socket.username, socket.room);
 
->>>>>>> 4414905 (reduce info others)
 	let gameover = false
 	let currentShape;
 	let i = 0;
@@ -71,8 +62,28 @@ export function launchGame(io, socket) {
 	let level = 0;
 	let lines = 0;
 
-	let interval = setInterval(() => {
-		if (currentShape == undefined)
+			let list = [];
+			for (let { username, score } of this.gameOverList)
+				list.unshift({ username, score });
+
+			for (let [_, { username, score, gameover }] of this.players)
+				if (!gameover)
+					list.unshift({ username, score });
+
+			this.setOwner(this.owner);
+
+			this.io.in(this.name).emit(`endgame:${this.name}`, list);
+		}
+	}
+
+	launch() {
+		if (room.started)
+			return ;
+
+		this.started = true;
+		let isSolo = (this.players.size === 1);
+
+		for (let [i, player] of this.players)
 		{
 			let newShape = TETRIMINOS[i++ % TETRIMINOS.length]
 				.constructShape()
@@ -106,13 +117,6 @@ export function launchGame(io, socket) {
 
 			sendLayerData(io, socket, layer, { score, lines })
 		}
-<<<<<<< HEAD
-		sendGameData(io, room, board, socket.id)
-	}, 500)
-
-	socket.on('leaveRoom', () => {
-		console.log(`${room.name}`, 'leaveRoom -> ', socket.id);
-=======
 		sendGameData(socket, board, { score, lines }, nextShape);
 	}, {
 		blackhole: 75,
@@ -124,7 +128,6 @@ export function launchGame(io, socket) {
 	const leaveRoom = () => {
 		// console.log(socket.room.name, 'leaveRoom -> ', socket.id);
 		socket.removeAllListeners(`event:${socket.room.name}`)
->>>>>>> 4414905 (reduce info others)
 		clearInterval(interval)
 	})
 	socket.on('disconnect', () => {

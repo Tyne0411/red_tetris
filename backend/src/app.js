@@ -121,9 +121,53 @@ io.on("connection", (socket) => {
 				console.log('notauthorized')
 				return ;
 			}
+<<<<<<< HEAD
 			// Launch game loop
 			console.log(room.name, 'launchGame');
 			launchGame(io, room, rooms.get(room.name), socket);
+=======
+			sendRoomList(io);
+		}
+
+		room.addPlayer(username, client);
+
+		sendRoomList(io);
+
+		room.sendUsersList();
+
+		client.on(`start:${roomname}`, () => {
+
+			if (room.owner?.client?.id !== client.id)
+				return ;
+
+			io.in(roomname).emit(`start:${roomname}`);
+
+			room.launch();
+		});
+
+		client.on(`restart:${roomname}`, () => {
+			if (room.owner?.client?.id !== client.id)
+				return ;
+			io.in(roomname).emit(`restart:${roomname}`);
+
+			for (let [_, player] of room.players)
+				player.client.clearListeners();
+			room.players = new Map();
+			room.removeInterval();
+
+			rooms.set(roomname, new Game(io, roomname, room.gameMode));
+			room = rooms.get(roomname);
+
+			room.addPlayer(username, client, () => {});
+		});
+
+		client.on(`gameMode:${roomname}`, (gameMode) => {
+			let newGameMode = gameMode ?? room.gameMode;
+
+			if (room.owner?.client?.id === client.id)
+				room.gameMode = newGameMode;
+			io.in(roomname).emit(`gameMode:${roomname}`, room.gameMode);
+>>>>>>> b544993 (security)
 		})
 
 		// Disconnects
